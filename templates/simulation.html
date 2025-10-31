@@ -1,0 +1,410 @@
+{% extends "base.html" %}
+
+{% block page_title %}Risk Simulation{% endblock %}
+
+{% block content %}
+<div class="simulation-panel">
+    <div class="grid grid-cols-2 gap-6">
+        <!-- Input Panel -->
+        <div class="card">
+            <h3 class="card-title">Simulate Student Risk Factors</h3>
+            <p style="color: #6c757d; margin-bottom: 2rem;">Adjust the factors below to see how they impact engagement risk prediction.</p>
+            
+            <form id="simulation-form" class="simulation-form">
+                <!-- Academic Factors -->
+                <div class="form-section">
+                    <h4>Academic Factors</h4>
+                    <div class="form-group">
+                        <label for="gpa">GPA (0.0 - 4.0)</label>
+                        <input type="range" id="gpa" name="gpa" min="0" max="4" step="0.1" value="3.0" class="slider">
+                        <span class="slider-value" id="gpa-value">3.0</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="attendance">Attendance Rate (%)</label>
+                        <input type="range" id="attendance" name="attendance" min="0" max="100" value="75" class="slider">
+                        <span class="slider-value" id="attendance-value">75%</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="course-load">Course Load (credits)</label>
+                        <input type="range" id="course-load" name="course_load" min="12" max="24" value="15" class="slider">
+                        <span class="slider-value" id="course-load-value">15</span>
+                    </div>
+                </div>
+                
+                <!-- Behavioral Factors -->
+                <div class="form-section">
+                    <h4>Behavioral Factors</h4>
+                    <div class="form-group">
+                        <label for="library-visits">Library Visits (per month)</label>
+                        <input type="range" id="library-visits" name="library_visits" min="0" max="30" value="8" class="slider">
+                        <span class="slider-value" id="library-visits-value">8</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lms-interactions">LMS Interactions (per week)</label>
+                        <input type="range" id="lms-interactions" name="lms_interactions" min="0" max="100" value="45" class="slider">
+                        <span class="slider-value" id="lms-interactions-value">45</span>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="extracurricular">Extracurricular Activities</label>
+                        <input type="range" id="extracurricular" name="extracurricular" min="0" max="10" value="3" class="slider">
+                        <span class="slider-value" id="extracurricular-value">3</span>
+                    </div>
+                </div>
+                
+                <!-- Socio-economic Factors -->
+                <div class="form-section">
+                    <h4>Socio-economic Factors</h4>
+                    <div class="form-group">
+                        <label for="financial-aid">Financial Aid</label>
+                        <select id="financial-aid" name="financial_aid" class="form-select">
+                            <option value="Yes">Yes</option>
+                            <option value="No">No</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="work-study">Work Study</label>
+                        <select id="work-study" name="work_study" class="form-select">
+                            <option value="None">None</option>
+                            <option value="Part-time">Part-time</option>
+                            <option value="Full-time">Full-time</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="first-generation">First Generation Student</label>
+                        <select id="first-generation" name="first_generation" class="form-select">
+                            <option value="Yes">Yes</option>
+                            <option value="No" selected>No</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 2rem;">
+                    <i class="fas fa-calculator"></i>
+                    Calculate Risk Score
+                </button>
+            </form>
+        </div>
+        
+        <!-- Results Panel -->
+        <div class="card">
+            <h3 class="card-title">Prediction Results</h3>
+            <div id="results-container" style="text-align: center; padding: 2rem;">
+                <div id="risk-gauge-simulation" style="height: 300px; margin-bottom: 2rem;"></div>
+                <div id="risk-breakdown" style="text-align: left;">
+                    <!-- Risk breakdown will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Feature Impact Visualization -->
+    <div class="card mt-6">
+        <h3 class="card-title">Feature Impact Analysis</h3>
+        <div id="simulation-impact-chart" style="height: 400px;"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    initializeSliders();
+    initializeSimulationForm();
+    runInitialSimulation();
+});
+
+function initializeSliders() {
+    // Update slider values when sliders change
+    const sliders = document.querySelectorAll('.slider');
+    sliders.forEach(slider => {
+        const valueElement = document.getElementById(slider.id + '-value');
+        
+        slider.addEventListener('input', function() {
+            if (slider.id === 'attendance') {
+                valueElement.textContent = this.value + '%';
+            } else {
+                valueElement.textContent = this.value;
+            }
+        });
+    });
+}
+
+function initializeSimulationForm() {
+    document.getElementById('simulation-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        runSimulation();
+    });
+}
+
+function runInitialSimulation() {
+    // Run simulation with default values
+    setTimeout(runSimulation, 500);
+}
+
+function runSimulation() {
+    const formData = new FormData(document.getElementById('simulation-form'));
+    const data = Object.fromEntries(formData);
+    
+    // Convert numeric values
+    data.gpa = parseFloat(data.gpa);
+    data.attendance = parseInt(data.attendance);
+    data.course_load = parseInt(data.course_load);
+    data.library_visits = parseInt(data.library_visits);
+    data.lms_interactions = parseInt(data.lms_interactions);
+    data.extracurricular = parseInt(data.extracurricular);
+    
+    // Show loading state
+    document.getElementById('results-container').innerHTML = `
+        <div style="display: flex; justify-content: center; align-items: center; height: 200px;">
+            <div class="loading-spinner"></div>
+        </div>
+    `;
+    
+    // Simulate API call (replace with actual API call)
+    setTimeout(() => {
+        const riskScore = calculateRiskScore(data);
+        displayResults(riskScore, data);
+        updateFeatureImpactChart(data);
+    }, 1000);
+}
+
+function calculateRiskScore(data) {
+    // Simple risk calculation algorithm (replace with your ML model)
+    let risk = 0;
+    
+    // Academic factors (40% weight)
+    risk += (4 - data.gpa) * 10; // Lower GPA = higher risk
+    risk += (100 - data.attendance) * 0.3; // Lower attendance = higher risk
+    risk += Math.max(0, data.course_load - 15) * 2; // Higher course load = higher risk
+    
+    // Behavioral factors (40% weight)
+    risk += Math.max(0, 10 - data.library_visits) * 1.5; // Fewer library visits = higher risk
+    risk += Math.max(0, 50 - data.lms_interactions) * 0.4; // Fewer LMS interactions = higher risk
+    risk += Math.max(0, 2 - data.extracurricular) * 5; // Fewer activities = higher risk
+    
+    // Socio-economic factors (20% weight)
+    if (data.financial_aid === 'No') risk += 10;
+    if (data.work_study === 'Full-time') risk += 15;
+    else if (data.work_study === 'Part-time') risk += 8;
+    if (data.first_generation === 'Yes') risk += 12;
+    
+    // Normalize to 0-100 scale
+    risk = Math.max(0, Math.min(100, risk));
+    
+    return Math.round(risk);
+}
+
+function displayResults(riskScore, data) {
+    const riskLevel = riskScore > 70 ? 'High' : riskScore > 30 ? 'Medium' : 'Low';
+    const riskColor = riskScore > 70 ? '#ef4444' : riskScore > 30 ? '#f59e0b' : '#10b981';
+    
+    // Create gauge chart
+    const gaugeData = [
+        {
+            type: "indicator",
+            mode: "gauge+number",
+            value: riskScore,
+            title: { 
+                text: `<b>PREDICTED RISK</b><br><span style="color: ${riskColor}; font-size: 14px;">${riskLevel} Risk</span>`,
+                font: { size: 16 }
+            },
+            gauge: {
+                axis: { range: [0, 100] },
+                bar: { color: riskColor },
+                steps: [
+                    { range: [0, 30], color: "#dcfce7" },
+                    { range: [30, 70], color: "#fef3c7" },
+                    { range: [70, 100], color: "#fee2e2" }
+                ],
+                threshold: {
+                    line: { color: "red", width: 4 },
+                    thickness: 0.75,
+                    value: 70
+                }
+            }
+        }
+    ];
+    
+    const gaugeLayout = {
+        width: 400,
+        height: 300,
+        margin: { t: 80, r: 25, l: 25, b: 25 },
+        font: { family: "Inter" }
+    };
+    
+    Plotly.newPlot('risk-gauge-simulation', gaugeData, gaugeLayout, { displayModeBar: false });
+    
+    // Display risk breakdown
+    document.getElementById('risk-breakdown').innerHTML = `
+        <div style="background: ${riskColor}15; padding: 1.5rem; border-radius: var(--border-radius); border-left: 4px solid ${riskColor};">
+            <h4 style="margin-bottom: 1rem; color: ${riskColor};">Risk Analysis</h4>
+            <div class="data-grid">
+                <div class="data-item">
+                    <label>Overall Risk Score</label>
+                    <span style="color: ${riskColor}; font-weight: 600;">${riskScore}%</span>
+                </div>
+                <div class="data-item">
+                    <label>Risk Level</label>
+                    <span class="risk-badge risk-${riskLevel.toLowerCase()}">${riskLevel}</span>
+                </div>
+                <div class="data-item">
+                    <label>Recommended Action</label>
+                    <span>${getRecommendedAction(riskLevel)}</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function getRecommendedAction(riskLevel) {
+    const actions = {
+        'Low': 'Continue monitoring. No immediate intervention needed.',
+        'Medium': 'Schedule academic check-in and provide resources.',
+        'High': 'Immediate intervention required. Contact student and assign mentor.'
+    };
+    return actions[riskLevel];
+}
+
+function updateFeatureImpactChart(data) {
+    // Calculate individual feature impacts
+    const features = [
+        { name: 'GPA', impact: (4 - data.gpa) * 10 },
+        { name: 'Attendance', impact: (100 - data.attendance) * 0.3 },
+        { name: 'Course Load', impact: Math.max(0, data.course_load - 15) * 2 },
+        { name: 'Library Visits', impact: Math.max(0, 10 - data.library_visits) * 1.5 },
+        { name: 'LMS Activity', impact: Math.max(0, 50 - data.lms_interactions) * 0.4 },
+        { name: 'Extracurricular', impact: Math.max(0, 2 - data.extracurricular) * 5 }
+    ];
+    
+    const featureNames = features.map(f => f.name);
+    const impacts = features.map(f => f.impact);
+    
+    const chartData = [{
+        type: 'bar',
+        x: impacts,
+        y: featureNames,
+        orientation: 'h',
+        marker: {
+            color: impacts.map(impact => 
+                impact > 15 ? '#ef4444' : impact > 5 ? '#f59e0b' : '#10b981'
+            )
+        }
+    }];
+    
+    const layout = {
+        title: 'Individual Feature Impact on Risk Score',
+        xaxis: { title: 'Risk Impact Points' },
+        yaxis: { title: 'Features' },
+        margin: { t: 50, r: 50, l: 150, b: 50 },
+        height: 400
+    };
+    
+    Plotly.newPlot('simulation-impact-chart', chartData, layout);
+}
+</script>
+
+<style>
+.simulation-form {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 1rem;
+}
+
+.form-section {
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--gray-light);
+}
+
+.form-section:last-child {
+    border-bottom: none;
+}
+
+.form-section h4 {
+    margin-bottom: 1rem;
+    color: var(--dark);
+    font-weight: 600;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--dark);
+}
+
+.slider {
+    width: 100%;
+    height: 6px;
+    border-radius: 3px;
+    background: #ddd;
+    outline: none;
+    opacity: 0.7;
+    transition: opacity .2s;
+}
+
+.slider:hover {
+    opacity: 1;
+}
+
+.slider-value {
+    display: inline-block;
+    margin-left: 1rem;
+    font-weight: 600;
+    color: var(--primary);
+    min-width: 40px;
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--gray-light);
+    border-radius: var(--border-radius);
+    background: white;
+    font-family: 'Inter', sans-serif;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Scrollbar styling */
+.simulation-form::-webkit-scrollbar {
+    width: 6px;
+}
+
+.simulation-form::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.simulation-form::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+}
+
+.simulation-form::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-dark);
+}
+</style>
+{% endblock %}

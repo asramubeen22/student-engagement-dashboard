@@ -1,0 +1,368 @@
+{% extends "base.html" %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon primary">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-info">
+                <h3>1,247</h3>
+                <p>Total Students</p>
+                <span class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i> 2.2% from last month
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon warning">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div class="stat-info">
+                <h3>186</h3>
+                <p>Students At Risk</p>
+                <span class="stat-trend negative">
+                    <i class="fas fa-arrow-down"></i> 12.5% decrease
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon success">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-info">
+                <h3>87%</h3>
+                <p>Intervention Success</p>
+                <span class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i> 8.3% improvement
+                </span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon info">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="stat-info">
+                <h3>78.3%</h3>
+                <p>Average Attendance</p>
+                <span class="stat-trend positive">
+                    <i class="fas fa-arrow-up"></i> 21% improvement
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="charts-grid">
+        <!-- Risk Distribution Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Risk Score Distribution</h3>
+                <div class="chart-actions">
+                    <button class="btn-icon"><i class="fas fa-ellipsis-v"></i></button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="riskDistributionChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Engagement Trends Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Engagement Trends</h3>
+                <div class="chart-actions">
+                    <button class="btn-icon"><i class="fas fa-ellipsis-v"></i></button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="engagementTrendsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Risk by Program Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Risk by Program</h3>
+                <div class="chart-actions">
+                    <button class="btn-icon"><i class="fas fa-ellipsis-v"></i></button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="riskByProgramChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Attendance vs GPA Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Attendance vs GPA</h3>
+                <div class="chart-actions">
+                    <button class="btn-icon"><i class="fas fa-ellipsis-v"></i></button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="attendanceGPAChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Intervention Status Chart -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Intervention Status</h3>
+                <div class="chart-actions">
+                    <button class="btn-icon"><i class="fas fa-ellipsis-v"></i></button>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="interventionStatusChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Mini Metrics -->
+        <div class="chart-card">
+            <div class="chart-header">
+                <h3>Performance Metrics</h3>
+                <div class="chart-actions">
+                    <button class="btn-icon"><i class="fas fa-ellipsis-v"></i></button>
+                </div>
+            </div>
+            <div class="mini-metrics">
+                <div class="mini-metric">
+                    <span class="metric-value">86.4%</span>
+                    <span class="metric-label">Completion Rate</span>
+                </div>
+                <div class="mini-metric">
+                    <span class="metric-value">3.2</span>
+                    <span class="metric-label">Avg GPA</span>
+                </div>
+                <div class="mini-metric">
+                    <span class="metric-value">92%</span>
+                    <span class="metric-label">Satisfaction</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Initializing dashboard charts...');
+
+    // Risk Distribution Chart
+    const riskCtx = document.getElementById('riskDistributionChart');
+    if (riskCtx) {
+        new Chart(riskCtx, {
+            type: 'bar',
+            data: {
+                labels: ['0-20', '21-40', '41-60', '61-80', '81-100'],
+                datasets: [{
+                    label: 'Number of Students',
+                    data: [45, 78, 125, 92, 35],
+                    backgroundColor: [
+                        'rgba(46, 204, 113, 0.8)',
+                        'rgba(52, 152, 219, 0.8)',
+                        'rgba(155, 89, 182, 0.8)',
+                        'rgba(241, 196, 15, 0.8)',
+                        'rgba(231, 76, 60, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(46, 204, 113, 1)',
+                        'rgba(52, 152, 219, 1)',
+                        'rgba(155, 89, 182, 1)',
+                        'rgba(241, 196, 15, 1)',
+                        'rgba(231, 76, 60, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    title: {
+                        display: true,
+                        text: 'Student Risk Distribution'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Students'
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Risk Score Range'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Engagement Trends Chart
+    const engagementCtx = document.getElementById('engagementTrendsChart');
+    if (engagementCtx) {
+        new Chart(engagementCtx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                datasets: [{
+                    label: 'Engagement Score',
+                    data: [65, 72, 68, 74, 82, 79, 85],
+                    borderColor: 'rgba(52, 152, 219, 1)',
+                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 50,
+                        max: 100,
+                        title: {
+                            display: true,
+                            text: 'Engagement Score'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Risk by Program Chart
+    const programCtx = document.getElementById('riskByProgramChart');
+    if (programCtx) {
+        new Chart(programCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Engineering', 'Business', 'Arts', 'Science', 'Medicine'],
+                datasets: [{
+                    data: [25, 18, 32, 22, 15],
+                    backgroundColor: [
+                        'rgba(231, 76, 60, 0.8)',
+                        'rgba(52, 152, 219, 0.8)',
+                        'rgba(46, 204, 113, 0.8)',
+                        'rgba(155, 89, 182, 0.8)',
+                        'rgba(241, 196, 15, 0.8)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    // Attendance vs GPA Chart
+    const attendanceCtx = document.getElementById('attendanceGPAChart');
+    if (attendanceCtx) {
+        new Chart(attendanceCtx, {
+            type: 'scatter',
+            data: {
+                datasets: [{
+                    label: 'Students',
+                    data: [
+                        {x: 65, y: 2.1}, {x: 72, y: 2.8}, {x: 85, y: 3.4},
+                        {x: 78, y: 3.1}, {x: 92, y: 3.8}, {x: 88, y: 3.6},
+                        {x: 70, y: 2.5}, {x: 95, y: 3.9}, {x: 82, y: 3.2},
+                        {x: 75, y: 2.9}, {x: 68, y: 2.3}, {x: 90, y: 3.7}
+                    ],
+                    backgroundColor: 'rgba(155, 89, 182, 0.6)',
+                    pointRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Attendance Rate (%)'
+                        },
+                        min: 60,
+                        max: 100
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'GPA'
+                        },
+                        min: 2.0,
+                        max: 4.0
+                    }
+                }
+            }
+        });
+    }
+
+    // Intervention Status Chart
+    const interventionCtx = document.getElementById('interventionStatusChart');
+    if (interventionCtx) {
+        new Chart(interventionCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Completed', 'In Progress', 'Scheduled', 'Not Started'],
+                datasets: [{
+                    data: [45, 30, 15, 10],
+                    backgroundColor: [
+                        'rgba(46, 204, 113, 0.8)',
+                        'rgba(52, 152, 219, 0.8)',
+                        'rgba(241, 196, 15, 0.8)',
+                        'rgba(231, 76, 60, 0.8)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    console.log('All charts initialized successfully!');
+});
+</script>
+{% endblock %}

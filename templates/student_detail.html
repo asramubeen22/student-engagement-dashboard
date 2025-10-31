@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block page_title %}Student Management{% endblock %}
+
+{% block content %}
+<div class="students-management">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Students at Risk</h2>
+            <div class="filters">
+                <select class="filter-select" id="program-filter">
+                    <option value="">All Programs</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Engineering">Engineering</option>
+                    <option value="Business">Business</option>
+                    <option value="Arts">Arts</option>
+                    <option value="Science">Science</option>
+                </select>
+                <select class="filter-select" id="risk-filter">
+                    <option value="">All Risk Levels</option>
+                    <option value="High">High Risk</option>
+                    <option value="Medium">Medium Risk</option>
+                    <option value="Low">Low Risk</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="table-container">
+            <table class="table" id="students-table">
+                <thead>
+                    <tr>
+                        <th>Student ID</th>
+                        <th>Name</th>
+                        <th>Program</th>
+                        <th>Attendance</th>
+                        <th>GPA</th>
+                        <th>Risk Score</th>
+                        <th>Last Activity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="students-tbody">
+                    <!-- Data will be populated by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="table-footer">
+            <div class="pagination-info">
+                Showing <span id="showing-count">0</span> of <span id="total-count">0</span> students
+            </div>
+            <div class="pagination">
+                <button class="btn btn-outline" id="prev-btn">Previous</button>
+                <span>Page <span id="current-page">1</span> of <span id="total-pages">1</span></span>
+                <button class="btn btn-outline" id="next-btn">Next</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let allStudents = [];
+let currentPage = 1;
+const studentsPerPage = 10;
+
+// Load students data
+document.addEventListener('DOMContentLoaded', function() {
+    loadStudents();
+    
+    // Add event listeners for filters
+    document.getElementById('program-filter').addEventListener('change', filterStudents);
+    document.getElementById('risk-filter').addEventListener('change', filterStudents);
+    document.getElementById('prev-btn').addEventListener('click', goToPreviousPage);
+    document.getElementById('next-btn').addEventListener('click', goToNextPage);
+});
+
+function loadStudents() {
+    fetch('/api/students')
+        .then(response => response.json())
+        .then(students => {
+            allStudents = students;
+            renderStudents();
+        })
+        .catch(error => {
+            console.error('Error loading students:', error);
+            showNotification('Error loading students data', 'error');
+        });
+}
+
+function renderStudents() {
+    const filteredStudents = filterStudentsData();
+    const startIndex = (currentPage - 1) * studentsPerPage;
+    const paginatedStudents = filteredStudents.slice(startIndex, startIndex + studentsPerPage);
+    
+    const tbody = document.getElementById('students-tbody');
+    tbody.innerHTML = paginatedStudents.map(student => `
+        <tr>
+            <td>${student.id}</td>
+            <td>
+                <div class="student-info">
+                    <strong>${student.name}</strong>
+                    <small>${student.email}</small>
+                </div>
+            </td>
+            <td>${student.program}</td>
+            <td>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${student.attendance}%"></div>
+                    <span style="margin-left: 8px; font-size: 0.875rem;">${student.attendance}%</span>
+                </div>
+            </td>
+            <td>${student.gpa}</td>
+            <td>
+                <span class="risk-badge risk-${student.risk_level.toLowerCase()}">
+                    ${student.risk_score}% - ${student.risk_level}
+                </span>
+            </td>
+            <td>${student.last_activity}</td>
+            <td>
+                <a href="/student/${student.id}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i>
+                    View
+                </a>
+            </td>
+        </tr>
+    `).join('');
+    
+    updatePaginationInfo(filteredStudents.length);
+}
+
+function filterStudentsData() {
+    const programFilter = document.getElementById('program-filter').value;
+    const riskFilter = document.getElementById('risk-filter').value;
+    
+    return allStudents.filter(student => {
+        const programMatch = !programFilter || student.program === programFilter;
+        const riskMatch = !riskFilter || student.risk_level === riskFilter;
+        return programMatch && riskMatch;
+    });
+}
+
+function filterStudents() {
+    currentPage = 1;
+    renderStudents();
+}
+
+function updatePaginationInfo(totalFiltered) {
+    const totalPages = Math.ceil(totalFiltered / studentsPerPage);
+    
+    document.getElementById('showing-count').textContent = Math.min(totalFiltered, currentPage * studentsPerPage);
+    document.getElementById('total-count').textContent = totalFiltered;
+    document.getElementById('current-page').textContent = currentPage;
+    document.getElementById('total-pages').textContent = totalPages;
+    
+    // Enable/disable pagination buttons
+    document.getElementById('prev-btn').disabled = currentPage === 1;
+    document.getElementById('next-btn').disabled = currentPage === totalPages || totalPages === 0;
+}
+
+function goToPreviousPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        renderStudents();
+    }
+}
+
+function goToNextPage() {
+    const totalFiltered = filterStudentsData().length;
+    const totalPages = Math.ceil(totalFiltered / studentsPerPage);
+    
+    if (currentPage < totalPages) {
+        currentPage++;
+        renderStudents();
+    }
+}
+</script>
+
+<style>
+.progress-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.progress-bar .progress-fill {
+    width: 80px;
+    height: 8px;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    border-radius: 4px;
+}
+
+.table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: var(--gray-light);
+    border-top: 1px solid #dee2e6;
+}
+
+.pagination-info {
+    color: var(--gray);
+    font-size: 0.875rem;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.student-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.student-info small {
+    color: #6c757d;
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}
